@@ -1,7 +1,8 @@
-#ifndef Led
-  #define Led
+#ifndef Led_h
+  #define Led_h
 
-  void setupLed();
-  void setRGB(int r, int g, int b);
+  void blinkEspLed(void *pvParametrs);
+  void setupRgbLed(void *pvParametrs);
+  void setRgb(int r, int g, int b);
 
 #endif
