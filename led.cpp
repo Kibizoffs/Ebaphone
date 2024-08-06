@@ -13,18 +13,25 @@ void blinkEspLed(void *pvParameters)
   }
 }
 
-void setupRgbLed(void *pvParameters)
-{
-  pinMode(32, OUTPUT);
-  pinMode(33, OUTPUT);
-  pinMode(14, OUTPUT);
-  Serial.println("MSG: RGB LED - OK");
-  vTaskDelete(NULL);
-}
-
 void setRgb(int r, int g, int b)
 {
-  analogWrite(32, r);
-  analogWrite(33, g);
-  analogWrite(14, b);
+  analogWrite(led_red_pin, r);
+  analogWrite(led_green_pin, g);
+  analogWrite(led_blue_pin, b);
+}
+
+void setupRgbLed(void *pvParameters)
+{
+  pinMode(led_red_pin, OUTPUT);
+  pinMode(led_green_pin, OUTPUT);
+  pinMode(led_blue_pin, OUTPUT);
+  Serial.println("MSG: RGB LED - OK");
+  setRgb(200, 0, 0);
+  vTaskDelay(500);
+  setRgb(0, 200, 0);
+  vTaskDelay(500);
+  setRgb(0, 0, 200);
+  vTaskDelay(500);
+  setRgb(0, 0, 0);
+  vTaskDelete(NULL);
 }
