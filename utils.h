@@ -1,7 +1,10 @@
 #ifndef Utils
   #define Utils
 
-  void replaceAll(String& str, const String& from, const String& to);
+  #include <Arduino.h>
+
+  void waitForInput();
+  String replaceAll(String str, String from, String to);
   void print(String str);
   void print(char* chars);
 

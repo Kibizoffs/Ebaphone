@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include "config.h"
+#include "utils.h"
 
 extern SemaphoreHandle_t display_status;
+extern SemaphoreHandle_t boot_status;
 
 SoftwareSerial Display(display_tx_pin, display_rx_pin);
 
@@ -13,71 +15,62 @@ void writeNull(){
 }
 
 void setPage(String page){
+  vTaskDelay(100 / portTICK_PERIOD_MS);
   Display.print("page " + page);
   writeNull();
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
 void writeStr(String obj, String txt){
+  vTaskDelay(100 / portTICK_PERIOD_MS);
   Display.print(obj + "=\"" + txt + "\"");
   writeNull();
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
-String getDisplayResponse(const int delay_time){
-  int start_time = millis();
-  String response = "";
-  while (millis() - start_time < delay_time){
-    while (Display.available()){
-      char c = Display.read();
-      response += c;
-    }
-    vTaskDelay(10);
-  }
-  Serial.println(response);
-  return response;
+void execDisplay(String command){
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Display.print(command);
+  writeNull();
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
-void setupRTC(){
-  Display.println("rtc0=2024");
-  getDisplayResponse(1000);
-  Display.println("rtc1=8");
-  getDisplayResponse(1000);
-  Display.println("rtc2=6");
-  getDisplayResponse(1000);
-  Display.println("rtc3=20");
-  getDisplayResponse(1000);
-  Display.println("rtc4=32");
-  getDisplayResponse(1000);
-  Display.println("rtc5=0");
-  getDisplayResponse(10000);
+
+void setupRTC(String hour, String minute, String second, String day, String month, String year){
+  Display.print("rtc0=" + year);
+  writeNull();
+  Display.print("rtc1=" + month);
+  writeNull();
+  Display.print("rtc2=" + day);
+  writeNull();
+  Display.print("rtc3=" + hour);
+  writeNull();
+  Display.print("rtc4=" + minute);
+  writeNull();
+  Display.print("rtc5=" + second);
+  writeNull();
+  print("MSG: Time set#br");
 }
 
 void setupDisplay(void *pvParametrs){
-  Display.begin(9600, SERIAL_8N1, display_tx_pin, display_rx_pin);
-  Serial.println("MSG: Display - OK");
+  Display.begin(9600);
+  writeStr("t0.txt", "");
   setPage("Terminal_h");
-  vTaskDelay(100);
-  writeStr("t0.txt", "MSG: Serial - OK\\r");
-  vTaskDelay(100);
-  writeStr("t0.txt+", "MSG: Display - OK\\r");
-  setupRTC();
-  vTaskDelay(2000);
+  print("MSG: Display - OK#br");
+  vTaskDelay(2000 / portTICK_PERIOD_MS);
   xSemaphoreGive(display_status);
   vTaskDelete(NULL);
 };
 
-void updateTime(){
-  Display.println("rtc0?");
-  String year = getDisplayResponse(1000);
-  Display.println("rtc1?");
-  String month = getDisplayResponse(1000);
-  Display.println("rtc2?");
-  String day = getDisplayResponse(1000);
-  Display.println("rtc3?");
-  String hour = getDisplayResponse(1000);
-  Display.println("rtc4?");
-  String minute = getDisplayResponse(1000);
-  Display.println("rtc5?");
-  String second = getDisplayResponse(1000);
-  String timeStr = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
-  writeStr("watch_time", timeStr);
+void setBoot(void *pvParametrs){
+  clear();
+  setPage("Boot_h");
+  execDisplay("slider.val=33");
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  execDisplay("slider.val=66");
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  execDisplay("slider.val=100");
+  xSemaphoreGive(boot_status);
+  setPage("Menu_h");
+  vTaskDelete(NULL);
 }
